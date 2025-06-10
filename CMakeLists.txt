@@ -13,8 +13,23 @@ set(PROJECT_VERSION "${TA_LIB_VERSION_MAJOR}.${TA_LIB_VERSION_MINOR}.${TA_LIB_VE
 
 set(CMAKE_C_STANDARD 11)
 
-# Option to build development tools (enabled by default)
-option(BUILD_DEV_TOOLS "Build development tools (gen_code, ta_regtest)" ON)
+# Detect Apple platforms (iOS, macOS, etc.)
+if(APPLE)
+    if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+        set(IOS TRUE)
+        message(STATUS "Building for iOS")
+    elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+        set(MACOS TRUE)
+        message(STATUS "Building for macOS")
+    endif()
+endif()
+
+# Option to build development tools (enabled by default, but disabled for iOS)
+if(IOS)
+    option(BUILD_DEV_TOOLS "Build development tools (gen_code, ta_regtest)" OFF)
+else()
+    option(BUILD_DEV_TOOLS "Build development tools (gen_code, ta_regtest)" ON)
+endif()
 message(STATUS "BUILD_DEV_TOOLS: ${BUILD_DEV_TOOLS}")
 
 # Default to Release config
@@ -35,6 +50,12 @@ if(WIN32)
 	else()
     	message(FATAL_ERROR "Platform env variable not set. Did you forget to do vcvarsall.bat?")
 	endif()
+elseif(IOS)
+    # For iOS, use a default install prefix that won't interfere with system
+    set(CMAKE_INSTALL_PREFIX "/usr/local" CACHE PATH "Installation Directory" FORCE)
+elseif(MACOS)
+    # For macOS, use standard Unix-like prefix
+    set(CMAKE_INSTALL_PREFIX "/usr/local" CACHE PATH "Installation Directory" FORCE)
 endif()
 message(STATUS "Installation Directory: ${CMAKE_INSTALL_PREFIX}")
 
@@ -402,6 +423,39 @@ endif(MSVC)
 target_include_directories(ta-lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_include_directories(ta-lib-static PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
+# Apple-specific configurations
+if(APPLE)
+    # Set minimum deployment targets
+    if(IOS)
+        set_target_properties(ta-lib PROPERTIES
+            XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "12.0"
+            XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"  # iPhone and iPad
+        )
+        set_target_properties(ta-lib-static PROPERTIES
+            XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "12.0"
+            XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
+        )
+    elseif(MACOS)
+        set_target_properties(ta-lib PROPERTIES
+            XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET "10.15"
+        )
+        set_target_properties(ta-lib-static PROPERTIES
+            XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET "10.15"
+        )
+    endif()
+    
+    # Link required system frameworks
+    target_link_libraries(ta-lib PRIVATE "-framework Foundation")
+    target_link_libraries(ta-lib-static PRIVATE "-framework Foundation")
+    
+    # Set bundle identifier for iOS
+    if(IOS)
+        set_target_properties(ta-lib PROPERTIES
+            XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "org.ta-lib.ta-lib"
+        )
+    endif()
+endif()
+
 # Install the libraries and headers.
 if(WIN32)
     install(TARGETS ta-lib ta-lib-static
@@ -413,9 +467,17 @@ if(WIN32)
     install(FILES ${LIB_HEADERS}
         DESTINATION include
     )
+elseif(IOS)
+    # For iOS, only install static library (shared libraries not supported)
+    install(TARGETS ta-lib-static
+        ARCHIVE DESTINATION lib
+    )
+    install(FILES ${LIB_HEADERS}
+        DESTINATION include/ta-lib
+    )
 else()
     install(TARGETS ta-lib ta-lib-static
-        LIBRARY DESTINATION lib  # For shared libraries (.so on Linux)
+        LIBRARY DESTINATION lib  # For shared libraries (.so on Linux, .dylib on macOS)
         ARCHIVE DESTINATION lib  # For static libraries
     )
     install(FILES ${LIB_HEADERS}
@@ -539,6 +601,12 @@ if(BUILD_DEV_TOOLS)
 	# On windows, no need for a math library. It is already included in the standard library.
 	if(WIN32)
 		target_link_libraries(ta_regtest PRIVATE ta-lib-static)
+	elseif(APPLE)
+		# On Apple platforms, math functions are in the standard library
+		target_link_libraries(ta_regtest PRIVATE ta-lib-static)
+		if(IOS)
+			target_link_libraries(ta_regtest PRIVATE "-framework Foundation")
+		endif()
 	else()
 		target_link_libraries(ta_regtest PRIVATE ta-lib-static m)
 	endif()
@@ -626,6 +694,8 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|amd64|AMD64")
 	  else()
 	    status(FATAL_ERROR "Unsupported vcvarsall target: ${PLATFORM_ENV}")
       endif()
+    elseif(APPLE)
+	  set(APPLE_ARCH "x86_64")
     else()
 	  set(DEB_HOST_ARCH "amd64")
 	  set(RPM_HOST_ARCH "x86_64")
@@ -638,10 +708,14 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "armv7l")
     set(DEB_HOST_ARCH "armhf")
     set(RPM_HOST_ARCH "armv7hl")
     set(MSI_HOST_ARCH "arm_32")
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|arm64")
     set(DEB_HOST_ARCH "arm64")
     set(RPM_HOST_ARCH "aarch64")
     set(MSI_HOST_ARCH "arm_64")
+    # Handle Apple Silicon
+    if(APPLE)
+        set(APPLE_ARCH "arm64")
+    endif()
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "ppc64le")
     set(DEB_HOST_ARCH "ppc64el")
     set(RPM_HOST_ARCH "ppc64le")
