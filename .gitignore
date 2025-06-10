@@ -87,3 +87,12 @@ out/
 
 # Never ignore .gitkeep files
 !**/.gitkeep
+
+# Cmake build files
+
+CMakeCache.txt
+CMakeFiles/
+CPackConfig.cmake
+CPackSourceConfig.cmake
+cleanup_glob.cmake
+cmake_install.cmake
