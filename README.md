@@ -10,7 +10,7 @@ Build for ios/sim/macos
 
     cmake -B build-ios -DCMAKE_TOOLCHAIN_FILE=cmake/ios.toolchain.cmake -DPLATFORM=OS64 -DDEPLOYMENT_TARGET=18.0
 
-    cmake -B build-ios-sim -DCMAKE_TOOLCHAIN_FILE=cmake/ios.toolchain.cmake -DPLATFORM=SIMULATOR64 -DDEPLOYMENT_TARGET=18.0
+    cmake -B build-ios-sim -DCMAKE_TOOLCHAIN_FILE=cmake/ios.toolchain.cmake -DPLATFORM=SIMULATORARM64 -DDEPLOYMENT_TARGET=18.0
 
     cmake -B build-macos -DCMAKE_SYSTEM_NAME=Darwin
 
