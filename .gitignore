@@ -96,3 +96,7 @@ CPackConfig.cmake
 CPackSourceConfig.cmake
 cleanup_glob.cmake
 cmake_install.cmake
+
+# tag files
+tags
+
