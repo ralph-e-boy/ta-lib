@@ -6,7 +6,7 @@ Build for ios/sim/macos
 
 
     ```
-    cmakek . 
+    cmake . 
 
     cmake -B build-ios -DCMAKE_TOOLCHAIN_FILE=cmake/ios.toolchain.cmake -DPLATFORM=OS64 -DDEPLOYMENT_TARGET=18.0
 
