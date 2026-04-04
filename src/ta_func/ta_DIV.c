@@ -191,6 +191,16 @@ double outReal[],
 
    /* Insert TA function code here. */
 
+#if defined(TA_USE_ACCELERATE) && !defined(USE_SINGLE_PRECISION_INPUT)
+   {
+      const vDSP_Length n = (vDSP_Length)(endIdx - startIdx + 1);
+      /* vDSP_vdivD computes B[i] / A[i], so pass inReal1 as A to get inReal0 / inReal1 */
+      vDSP_vdivD(inReal1 + startIdx, 1, inReal0 + startIdx, 1, outReal, 1, n);
+      VALUE_HANDLE_DEREF(outNBElement) = (int)n;
+      VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
+      return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
+   }
+#else
    for( i=startIdx, outIdx=0; i <= endIdx; i++, outIdx++ )
    {
       outReal[outIdx] = inReal0[i]/inReal1[i];
@@ -200,6 +210,7 @@ double outReal[],
    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 
    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
+#endif
 }
 
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/

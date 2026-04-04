@@ -447,6 +447,16 @@ if(APPLE)
     # Link required system frameworks
     target_link_libraries(ta-lib PRIVATE "-framework Foundation")
     target_link_libraries(ta-lib-static PRIVATE "-framework Foundation")
+
+    # Apple Accelerate framework for vectorized math (vDSP/vForce)
+    option(TA_USE_ACCELERATE "Use Apple Accelerate framework for vectorized math" ON)
+    if(TA_USE_ACCELERATE)
+        target_compile_definitions(ta-lib PRIVATE TA_USE_ACCELERATE)
+        target_compile_definitions(ta-lib-static PRIVATE TA_USE_ACCELERATE)
+        target_link_libraries(ta-lib PRIVATE "-framework Accelerate")
+        target_link_libraries(ta-lib-static PRIVATE "-framework Accelerate")
+        message(STATUS "Apple Accelerate framework: ENABLED")
+    endif()
     
     # Set bundle identifier for iOS
     if(IOS)
