@@ -90,14 +90,3 @@ out/
 
 cmake-build-debug/
 rust/target
-CMakeFiles
-CMakeFiles/**
-
-#### aider 
-.aider*
-.aider/*
-
-CMakeCache.txt
-CPackConfig.cmake
-CPackSourceConfig.cmake
-cmake_install.cmake
