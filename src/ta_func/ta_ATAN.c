@@ -185,7 +185,15 @@ double outReal[],
 
    /* Insert TA function code here. */
 
-   /* Default return values */
+#if defined(TA_USE_ACCELERATE) && !defined(USE_SINGLE_PRECISION_INPUT)
+   {
+      int n = endIdx - startIdx + 1;
+      vvatan(outReal, inReal + startIdx, &n);
+      VALUE_HANDLE_DEREF(outNBElement) = n;
+      VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
+      return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
+   }
+#else
    for( i=startIdx, outIdx=0; i <= endIdx; i++, outIdx++ )
    {
       outReal[outIdx] = std_atan(inReal[i]);
@@ -195,6 +203,7 @@ double outReal[],
    VALUE_HANDLE_DEREF(outBegIdx)    = startIdx;
 
    return ENUM_VALUE(RetCode,TA_SUCCESS,Success);
+#endif
 }
 
 /**** START GENCODE SECTION 5 - DO NOT DELETE THIS LINE ****/
