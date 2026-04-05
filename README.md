@@ -20,6 +20,10 @@ Build for ios/sim/macos
 
     ```
 
+### Apple Accelerate Optimizations
+
+19 element-wise functions (ADD, SUB, MULT, DIV, SQRT, LN, LOG10, EXP, CEIL, FLOOR, SIN, COS, TAN, ASIN, ACOS, ATAN, SINH, COSH, TANH) are vectorized via Apple Accelerate (vDSP/vForce) on macOS and iOS, leveraging NEON SIMD under the hood. Enabled by default through the CMake option `TA_USE_ACCELERATE`; double-precision only (float variants fall back to scalar).
+
 ------
 [![Discord chat](https://img.shields.io/discord/1038616996062953554.svg?logo=discord&style=flat-square)](https://discord.gg/Erb6SwsVbH)
 
